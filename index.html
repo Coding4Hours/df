@@ -420,8 +420,6 @@
       iframe.onload = () => {
         const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
 
-        // Only inject if the iframe is still about:blank
-        if (iframeDoc.location.href === 'about:blank') {
           // Clear existing content to ensure a clean slate for the script injection
           iframeDoc.body.innerHTML = '';
           iframeDoc.head.innerHTML = ''; // Also clear head in case of previous injections
@@ -430,16 +428,14 @@
           scriptElement.textContent = dashboardCode; // Assign the full code as text content
           iframeDoc.head.appendChild(scriptElement); // Append to head for immediate execution
           console.log('Arc.io Dashboard code injected into about:blank iframe.');
-        } else if (iframeDoc.location.href.includes('client.kitory.cc')) {
-          console.warn('Iframe has navigated to client.kitory.cc. Dashboard code injection will not occur due to Same-Origin Policy.');
-        }
+
       };
 
       // Set the iframe src to about:blank. This will trigger the onload event.
       // In case it's already about:blank, setting it again ensures the onload fires for re-injection
       // if needed (e.g., if the user manually reloads the iframe while it's on about:blank,
       // though our main flow involves navigation away).
-      iframe.src = './a'; // Initially set to the target URL
+      iframe.src = './a.html'; // Initially set to the target URL
     });
   </script>
 </body>

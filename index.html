@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arc.io Session Wrapper</title>
+  <!-- Load Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Custom styles for the parent 'about:blank' page */
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f3f4f6;
+      /* bg-gray-100 */
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      /* Ensure full viewport height */
+    }
+
+    .wrapper {
+      width: 90%;
+      height: 90vh;
+      /* Make it take most of the viewport height */
+      max-width: 1200px;
+      /* Limit max width for large screens */
+      padding: 1rem;
+      background-color: #ffffff;
+      border-radius: 0.75rem;
+      /* rounded-xl */
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      /* shadow-lg */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      /* Make iframe fill its parent wrapper */
+      border: none;
+      border-radius: 0.5rem;
+      /* rounded-lg */
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      /* shadow-md */
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrapper">
+    <h2 class="text-2xl font-bold mb-4 text-blue-700">Arc.io Dashboard Container</h2>
+    <p class="text-gray-600 mb-4">The dashboard below will run for ~5 minutes 10 seconds (310s), then navigate the
+      iframe to client.kitory.cc</p>
+    <iframe id="arcioIframe" src="about:blank" class="flex-grow"></iframe>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const iframe = document.getElementById('arcioIframe');
+
+      // The entire JavaScript code for the Arc.io Session Dashboard,
+      // prepared as a string to be injected into the iframe.
+      const dashboardCode = `
+                (function() {
+                    // This script runs inside an iframe.
+                    // Clear the current document's body content to ensure a clean slate
+                    document.body.innerHTML = '';
+
+                    // Create a container for the sessions
+                    const sessionsContainer = document.createElement('div');
+                    sessionsContainer.id = 'sessions-container';
+                    sessionsContainer.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8'; // Tailwind classes
+
+                    // Create main dashboard elements and append to body
+                    const mainDiv = document.createElement('div');
+                    mainDiv.className = 'container mx-auto p-4';
+                    mainDiv.innerHTML = \`
+                        <h1 class="text-4xl font-bold text-center mb-8 text-blue-800">Arc.io Session Dashboard (DevTools)</h1>
+                        <p class="text-center text-gray-700 mb-6">Sessions will automatically restart after ~62 seconds.</p>
+                        <div class="text-center text-xl font-semibold mb-6">
+                            Total Coins Earned: <span id="totalCoinsEarned" class="text-green-700">0</span>
+                        </div>
+                        <div class="text-center text-lg font-medium mb-4">
+                            Total Uptime for Reload: <span id="totalUptimeForReload" class="text-purple-700">0 seconds</span> / 310 seconds
+                        </div>
+                    \`;
+                    mainDiv.appendChild(sessionsContainer);
+                    document.body.appendChild(mainDiv);
+
+                    // Add Tailwind CSS if not already present (should be in parent, but good to ensure)
+                    if (!document.querySelector('script[src*="cdn.tailwindcss.com"]')) {
+                        const tailwindScript = document.createElement('script');
+                        tailwindScript.src = 'https://cdn.tailwindcss.com';
+                        document.head.appendChild(tailwindScript);
+                    }
+
+                    // Add custom styles if not already present
+                    if (!document.getElementById('arcio-custom-styles')) {
+                        const style = document.createElement('style');
+                        style.id = 'arcio-custom-styles';
+                        style.textContent = \`
+                            body {
+                                font-family: 'Inter', sans-serif;
+                                background-color: #f3f4f6; /* bg-gray-100 */
+                                color: #374151; /* text-gray-800 */
+                                padding: 1.5rem; /* p-6 */
+                            }
+                            .session-card {
+                                background-color: #ffffff; /* bg-white */
+                                padding: 1.5rem; /* p-6 */
+                                border-radius: 0.5rem; /* rounded-lg */
+                                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-md */
+                                border: 1px solid #e5e7eb; /* border border-gray-200 */
+                            }
+                            .session-card h3 {
+                                font-size: 1.25rem; /* text-xl */
+                                font-weight: 600; /* font-semibold */
+                                margin-bottom: 1rem; /* mb-4 */
+                                color: #1d4ed8; /* text-blue-700 */
+                            }
+                            .session-card p {
+                                color: #4b5563; /* text-gray-600 */
+                                margin-bottom: 0.5rem; /* mb-2 */
+                            }
+                            .session-card span {
+                                font-weight: 500; /* font-medium */
+                                color: #1f2937; /* text-gray-900 */
+                            }
+                            .text-blue-600 { color: #2563eb; }
+                            .text-green-600 { color: #16a34a; }
+                            .text-green-700 { color: #047857; }
+                            .text-purple-600 { color: #9333ea; }
+                            .text-purple-700 { color: #7e22ce; }
+                            .text-red-500 { color: #ef4444; }
+                            .text-center { text-align: center; }
+                            .mb-8 { margin-bottom: 2rem; }
+                            .mb-6 { margin-bottom: 1.5rem; }
+                            .mb-4 { margin-bottom: 1rem; }
+                            .mx-auto { margin-left: auto; margin-right: auto; }
+                            .p-4 { padding: 1rem; }
+                            .grid { display: grid; }
+                            .gap-6 { gap: 1.5rem; }
+                            .mt-8 { margin-top: 2rem; }
+                            .container { max-width: 100%; }
+                            @media (min-width: 640px) {
+                                .sm\\:flex-row { flex-direction: row; }
+                                .sm\\:space-y-0 { margin-top: 0; margin-bottom: 0; }
+                                .sm\\:space-x-4 > :not([hidden]) ~ :not([hidden]) { margin-left: 1rem; }
+                            }
+                            @media (min-width: 768px) {
+                                .md\\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+                            }
+                            @media (min-width: 1024px) {
+                                .lg\\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+                            }
+                        \`;
+                        document.head.appendChild(style);
+                    }
+
+                    // --- Global session management variables ---
+                    let globalSessionCounter = 0;
+                    let MAX_CONCURRENT_SESSIONS = 8;
+                    const activeSessionManagers = new Map();
+                    let isStoppingAllSessions = false;
+
+                    let totalGainedCoins = 0;
+                    const totalCoinsEarnedElement = document.getElementById('totalCoinsEarned');
+
+                    let totalSessionUptimeSeconds = 0;
+                    const TOTAL_UPTIME_REQUIRED_FOR_RELOAD = 62 * 5; // 310 seconds (5 minutes and 10 seconds)
+                    const totalUptimeForReloadElement = document.getElementById('totalUptimeForReload');
+                    let uptimeCheckIntervalId;
+
+                    const updateTotalCoinsDisplay = () => {
+                        if (totalCoinsEarnedElement) {
+                            totalCoinsEarnedElement.textContent = totalGainedCoins;
+                        }
+                    };
+
+                    const updateGlobalUptimeDisplay = () => {
+                        if (totalUptimeForReloadElement) {
+                            totalUptimeForReloadElement.textContent = \`\${totalSessionUptimeSeconds} seconds\`;
+                        }
+                    };
+
+                    const startGlobalUptimeTracker = () => {
+                        if (uptimeCheckIntervalId) clearInterval(uptimeCheckIntervalId);
+
+                        uptimeCheckIntervalId = setInterval(() => {
+                            if (activeSessionManagers.size > 0 && !isStoppingAllSessions) {
+                                totalSessionUptimeSeconds += activeSessionManagers.size;
+                                updateGlobalUptimeDisplay();
+
+                                if (totalSessionUptimeSeconds >= TOTAL_UPTIME_REQUIRED_FOR_RELOAD) {
+                                    console.log(\`Total accumulated session uptime reached \${TOTAL_UPTIME_REQUIRED_FOR_RELOAD} seconds. Navigating iframe...\`);
+                                    clearInterval(uptimeCheckIntervalId); // Stop the uptime tracker
+                                    setTimeout(() => {
+                                        window.location.href = 'https://client.kitory.cc'; // Redirects the iframe to the target URL
+                                    }, 1000);
+                                }
+                            } else if (activeSessionManagers.size === 0 && totalSessionUptimeSeconds > 0) {
+                                totalSessionUptimeSeconds = 0;
+                                updateGlobalUptimeDisplay();
+                                clearInterval(uptimeCheckIntervalId);
+                                uptimeCheckIntervalId = null;
+                            }
+                        }, 1000);
+                    };
+
+                    async function createArcioSession(sessionId) {
+                        return new Promise((resolve, reject) => {
+                            const scheme = window.location.protocol === "https:" ? "wss" : 'ws';
+                            const hostname = window.location.hostname;
+                            const port = window.location.port ? ':' + window.location.port : '';
+                            const connection = new WebSocket(scheme + "://" + hostname + port + '/' + 'ws');
+
+                            let pingIntervalId;
+                            let sessionTimerIntervalId;
+                            let closeTimeoutId;
+
+                            let sessionStartTime = new Date();
+
+                            const sessionDurationElementId = \`sessionDuration-\${sessionId}\`;
+                            const arciogainedcoinsId = \`arciogainedcoins-\${sessionId}\`;
+                            const arciotimerId = \`arciotimer-\${sessionId}\`;
+                            const sessionContainerId = \`sessionContainer-\${sessionId}\`;
+
+                            let sessionContainer = document.getElementById(sessionContainerId);
+                            if (!sessionContainer) {
+                                sessionContainer = document.createElement('div');
+                                sessionContainer.id = sessionContainerId;
+                                sessionContainer.className = 'session-card';
+                                sessionContainer.innerHTML = \`
+                                    <h3 class="text-2xl">Session \${sessionId}</h3>
+                                    <p>Duration: <span id="\${sessionDurationElementId}" class="text-blue-600">0 seconds</span></p>
+                                    <p>Coins Gained: <span id="\${arciogainedcoinsId}" class="text-green-600">0</span></p>
+                                    <p>Timer: <span id="\${arciotimerId}" class="text-purple-600">60</span></p>
+                                \`;
+                                document.getElementById('sessions-container').appendChild(sessionContainer);
+                            }
+
+                            const sessionDurationElement = document.getElementById(sessionDurationElementId);
+                            const arciogainedcoinsElement = document.getElementById(arciogainedcoinsId);
+                            const arciotimerElement = document.getElementById(arciotimerId);
+
+                            const cleanupSession = () => {
+                                if (pingIntervalId) clearInterval(pingIntervalId);
+                                if (sessionTimerIntervalId) clearInterval(sessionTimerIntervalId);
+                                if (closeTimeoutId) clearTimeout(closeTimeoutId);
+                                console.log(\`Session \${sessionId}: All timers cleared.\`);
+                            };
+
+                            connection.onopen = function() {
+                                console.log(\`Session \${sessionId}: WebSocket connection opened.\`);
+
+                                pingIntervalId = setInterval(() => {
+                                    if (connection.readyState === WebSocket.OPEN) {
+                                        connection.send(JSON.stringify({ 'type': "ping" }));
+                                    } else {
+                                        clearInterval(pingIntervalId);
+                                    }
+                                }, 1000);
+
+                                closeTimeoutId = setTimeout(() => {
+                                    console.log(\`Session \${sessionId}: Initiating connection close after 62 seconds.\`);
+                                    connection.close(1000, "Session time expired");
+                                }, 62000);
+                            };
+
+                            connection.onclose = function(event) {
+                                console.log(\`Session \${sessionId}: Connection closed due to: \${event.reason} (Code: \${event.code})\`);
+                                cleanupSession();
+                                if (sessionDurationElement) {
+                                    sessionDurationElement.innerHTML = \`<span class="text-red-500">CLOSED</span>\`;
+                                }
+                                const containerToRemove = document.getElementById(sessionContainerId);
+                                if (containerToRemove) {
+                                    containerToRemove.remove();
+                                    console.log(\`Session \${sessionId}: HTML container removed.\`);
+                                }
+                                activeSessionManagers.delete(sessionId);
+                                resolve(sessionId);
+                            };
+
+                            connection.onerror = function(error) {
+                                console.error(\`Session \${sessionId}: WebSocket error:\`, error);
+                                cleanupSession();
+                                if (sessionDurationElement) {
+                                    sessionDurationElement.innerHTML = \`<span class="text-red-500">ERROR!</span>\`;
+                                }
+                                const containerToRemove = document.getElementById(sessionContainerId);
+                                if (containerToRemove) {
+                                    containerToRemove.remove();
+                                    console.log(\`Session \${sessionId}: HTML container removed due to error.\`);
+                                }
+                                activeSessionManagers.delete(sessionId);
+                                reject(sessionId);
+                            };
+
+                            let timer = 60;
+                            let hascoin = 0;
+
+                            sessionTimerIntervalId = setInterval(() => {
+                                timer--;
+                                if (timer < 1) {
+                                    hascoin++;
+                                    totalGainedCoins++;
+                                    updateTotalCoinsDisplay();
+                                    if (arciogainedcoinsElement) {
+                                        arciogainedcoinsElement.innerHTML = hascoin;
+                                    }
+                                    timer = 60;
+                                }
+                                if (arciotimerElement) {
+                                    arciotimerElement.innerHTML = timer;
+                                }
+
+                                const currentTime = new Date();
+                                const elapsedSeconds = Math.floor((currentTime - sessionStartTime) / 1000);
+                                const hours = Math.floor(elapsedSeconds / 3600);
+                                const minutes = Math.floor((elapsedSeconds % 3600) / 60);
+                                const seconds = elapsedSeconds % 60;
+
+                                let durationString = '';
+                                if (hours > 0) {
+                                    durationString += \`\${hours} hours, \`;
+                                }
+                                if (minutes > 0 || hours > 0) {
+                                    durationString += \`\${minutes} minutes\`;
+                                } else {
+                                    durationString += \`\${seconds} seconds\`;
+                                }
+
+                                if (sessionDurationElement) {
+                                    sessionDurationElement.innerHTML = durationString;
+                                }
+                            }, 1000);
+                        });
+                    }
+
+                    const startNewSessionCycle = async () => {
+                        globalSessionCounter++;
+                        const currentSessionId = globalSessionCounter;
+                        console.log(\`Starting new session: \${currentSessionId}\`);
+
+                        try {
+                            const sessionPromise = createArcioSession(currentSessionId);
+                            activeSessionManagers.set(currentSessionId, {
+                                promise: sessionPromise,
+                            });
+
+                            if (activeSessionManagers.size === 1 && !uptimeCheckIntervalId) {
+                                startGlobalUptimeTracker();
+                            }
+
+                            await sessionPromise;
+                            console.log(\`Session \${currentSessionId} completed successfully.\`);
+
+                        } catch (errorId) {
+                            console.error(\`Session \${errorId} encountered an error and terminated.\`);
+                        } finally {
+                            if (!isStoppingAllSessions && activeSessionManagers.size < MAX_CONCURRENT_SESSIONS) {
+                                startNewSessionCycle();
+                            } else if (activeSessionManagers.size === 0) {
+                                if (uptimeCheckIntervalId) {
+                                    clearInterval(uptimeCheckIntervalId);
+                                    uptimeCheckIntervalId = null;
+                                    totalSessionUptimeSeconds = 0;
+                                    updateGlobalUptimeDisplay();
+                                }
+                            }
+                        }
+                    };
+
+                    const stopAllSessions = () => {
+                        isStoppingAllSessions = true;
+                        console.log("Stopping all current sessions...");
+
+                        if (uptimeCheckIntervalId) {
+                            clearInterval(uptimeCheckIntervalId);
+                            uptimeCheckIntervalId = null;
+                        }
+
+                        for (const sessionId of Array.from(activeSessionManagers.keys())) {
+                            const containerToRemove = document.getElementById(\`sessionContainer-\${sessionId}\`);
+                            if (containerToRemove) {
+                                containerToRemove.remove();
+                            }
+                        }
+                        activeSessionManagers.clear();
+                        sessionsContainer.innerHTML = '';
+                        globalSessionCounter = 0;
+                        totalGainedCoins = 0;
+                        updateTotalCoinsDisplay();
+                        totalSessionUptimeSeconds = 0;
+                        updateGlobalUptimeDisplay();
+                        isStoppingAllSessions = false;
+                        console.log("All session displays cleared. Ready to start new sessions.");
+                    };
+
+                    // Initial setup: Stop any existing sessions and start new ones
+                    stopAllSessions();
+
+                    console.log(\`Starting \${MAX_CONCURRENT_SESSIONS} new concurrent sessions.\`);
+                    for (let i = 0; i < MAX_CONCURRENT_SESSIONS; i++) {
+                        startNewSessionCycle();
+                    }
+                    startGlobalUptimeTracker();
+                })();
+            `;
+
+      // Programmatically create and inject the script into the iframe
+      iframe.onload = () => {
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+
+        // Only inject if the iframe is still about:blank
+        if (iframeDoc.location.href === 'about:blank') {
+          // Clear existing content to ensure a clean slate for the script injection
+          iframeDoc.body.innerHTML = '';
+          iframeDoc.head.innerHTML = ''; // Also clear head in case of previous injections
+
+          const scriptElement = iframeDoc.createElement('script');
+          scriptElement.textContent = dashboardCode; // Assign the full code as text content
+          iframeDoc.head.appendChild(scriptElement); // Append to head for immediate execution
+          console.log('Arc.io Dashboard code injected into about:blank iframe.');
+        } else if (iframeDoc.location.href.includes('client.kitory.cc')) {
+          console.warn('Iframe has navigated to client.kitory.cc. Dashboard code injection will not occur due to Same-Origin Policy.');
+        }
+      };
+
+      // Set the iframe src to about:blank. This will trigger the onload event.
+      // In case it's already about:blank, setting it again ensures the onload fires for re-injection
+      // if needed (e.g., if the user manually reloads the iframe while it's on about:blank,
+      // though our main flow involves navigation away).
+      iframe.src = './a'; // Initially set to the target URL
+    });
+  </script>
+</body>
+
+</html>
